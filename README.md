@@ -1,62 +1,185 @@
-# Apac Hack note
+# Substrate Front End Template
 
-The code in this repository picks up from the progress done during the encode hack submission of this project.
-i.e All work stemming from this [commit](https://github.com/chocolatenetwork/apac-ui/commit/492089a45fd9f682d10c3b9168387aa17f5e063c)
+This template allows you to create a front-end application that connects to a
+[Substrate](https://github.com/paritytech/substrate) node back-end with minimal
+configuration. To learn about Substrate itself, visit the
+[Substrate Developer Hub](https://substrate.dev).
 
-During the apac hackathon, the following improvements were made to our platform:
+The template is built with [Create React App](https://github.com/facebook/create-react-app)
+and [Polkadot js API](https://polkadot.js.org/api/). Familiarity with these tools
+will be helpful, but the template strives to be self-explanatory.
 
-1. Inclusion of an auth system - username and password
-2. User profiles and a gallery page of the projects
+## Using The Template
 
-These have been organised into respective polkadot-apac-hackathon folders.
+### Installation
 
-1. [Auth-server](./polkadot-apac-hackathon/README.md)
-2. [Auth-view](./src/polkadot-apac-hackathon/README.md)
-## UI Setup
+The codebase is installed using [git](https://git-scm.com/) and [yarn](https://yarnpkg.com/). This tutorial assumes you have installed yarn globally prior to installing it within the subdirectories. For the most recent version and how to install yarn, please refer to [yarn](https://yarnpkg.com/) documentation and installation guides.
 
-This has been moved to [substrate-template](./substrate-template.md)
+```bash
+# Clone the repository
+git clone https://github.com/chocolatenetwork/chocolate-front-end.git
+cd chocolate-front-end
+yarn install
+```
 
-# Implementor's guide.
+## Usage
 
-The goals are split into the following sections:
+You can start the template in development mode to connect to a locally running node
 
-1. Route protection for stage 2 and above in review modal - require auth.
-2. Include user profile route based on web3 address as pulled from chain.
-3. Include the gallery page.
-4. Complete signup form that collects name, web3 address and, _optionally_, password
-5. Setup react router for the login to redirect to last page
-6. Complete `useAuthState` hook to check with server and implement further guards for [jwt auth](https://www.youtube.com/watch?v=iD49_NIQ-R4).
-7. Develop multicurrency selector for collateralisation and use in a stage of the submit review modal- requires types from chain.
-8. Add in hcaptcha component for forms _optional_, ref could be made to flips instead.
-9. setup docs detailing the distinct feature added and code separation for moderators
+```bash
+yarn start
+```
 
-Reference [server-guide](./auth-server/README.md#%20Implementor's%20guide.) for more info, or lmk.
+You can also build the app in production mode,
 
-# Notes on implemented parts
+```bash
+yarn build
+```
 
-Only goals 1, 2, 4, 5,6,8 and 9 were achieved for this hackathon.
+and open `build/index.html` in your favorite browser.
 
-## Further resources
+## Configuration
 
-1. [Manual_routing](https://github.com/remix-run/react-router/tree/main/examples/auth)
-2. [server redirects](https://stackoverflow.com/a/43213567/16071410).
+The template's configuration is stored in the `src/config` directory, with
+`common.json` being loaded first, then the environment-specific json file,
+and finally environment variables, with precedence.
 
-## Further notes
+- `development.json` affects the development environment
+- `test.json` affects the test environment, triggered in `yarn test` command.
+- `production.json` affects the production environment, triggered in
+  `yarn build` command.
 
-- Route protection can be obtained by doing auth check before switch statement and not in individual components. The hook itself can be polyfilled on the client while the actual endpoint is being developed on server
-- Each review object coming from the chain has the `ownerId` as the public key of the writer, hence this address serves as a good id for the respective profiles. Since the key is stored on the db, further metadata can be pulled.
-- For user profile, the components with styling are ready [here](https://github.com/tobechi00/jade) **Note:** doen't show review on click yet , all's left is to wire it up with the respective data and fill-in metadata with db on the server
+Some environment variables are read and integrated in the template `config` object,
+including:
 
-- Rerouting for login and signup can make use of [react-router]'s `useNavigate` hook to retain memory of last route before login/signup
+- `REACT_APP_PROVIDER_SOCKET` overriding `config[PROVIDER_SOCKET]`
+- `REACT_APP_DEVELOPMENT_KEYRING` overriding `config[DEVELOPMENT_KEYRING]`
 
-- for access to substrate rpc calls, the api promise interface is used with methods mapping each section - `queries`, `extrinsics` and the like.Provided by the [`useSubstrate`] hook from the [`substrateProvider`]. Further notes on api [here](./substrate-template.md#%20useSubstrate%20Custom%20Hook)
+More on [React environment variables](https://create-react-app.dev/docs/adding-custom-environment-variables).
 
-Note: TxButton is a useful interface currently used to handle calls to `api.tx`
+When writing and deploying your own front end, you should configure:
 
-## Security notes.
+- Custom types as JSON in `src/config/types.json`. See
+  [Extending types](https://polkadot.js.org/api/start/types.extend.html).
+- `PROVIDER_SOCKET` in `src/config/production.json` pointing to your own
+  deployed node.
+- `DEVELOPMENT_KEYRING` in `src/config/common.json` be set to `false`.
+  See [Keyring](https://polkadot.js.org/api/start/keyring.html).
 
-As listed out by the hasura tutorial, owasp provides a concrete way of preventing xss after the prereq of csrf protection that jwts and refresh tokens provide.
+## Custom configuration for chocolate:
 
-One such is disallowing any untrusted data injection.
+1. Open the vscode workspace file [here](./chocolateapp.code-workspace). `chocolateapp.code-workspace`, as it groups the main folders in this workspace. Folders of focus are: 
 
-1. An example is react router route params
+   * [`functions`](./functions/) : This is a nodejs server that handles pinning cids to pinata. Can be run locally with `npm run test` from the folder
+   * [`auth-server`](./polkadot-apac-hackathon/auth-server/): This server handles authentication and can be run locally with `npm run start-dev`
+
+
+Both have `.env.sample` files which will need to be filled with the respective environment variables and copied to a `.env` file in the folder.
+
+> The `functions` folder requires pinata env variables to connect to ipfs, while the `auth-server` uses mongo so a db url would be needed to connect to the database
+>
+> A better config is comming in https://github.com/chocolatenetwork/chocolate-front-end/tree/development
+
+### Frontend env variables
+
+The frontend needs these environment variables to be set to connect to the node. Note: rpc won't work for local setup because it is overwritten [here](src/App.js#L13). Use a `.env.local` file with this content:
+
+```sh
+# You only need provide_playground as that is the default
+REACT_APP_PROVIDER_PLAYGROUND="ws://127.0.0.1:9944/"
+REACT_APP_PROVIDER_LOCAL="ws://127.0.0.1:9944"
+REACT_APP_PROVIDER_PHONE="ws://your.local.net.connected.to.node"
+REACT_APP_NODE_CONFIG=true
+
+
+# Auth server and pin server url overrides
+REACT_APP_AUTH_SERVER="http://localhost:3001"
+REACT_APP_PIN_SERVER="http://localhost:3000" 
+# This is testing sitekey
+REACT_APP_CAPTCHA_SITE_KEY="dad203ef-ed62-47f3-965f-baa67b9dbbac"
+REACT_APP_DEBUG=false # Enable for verbose logs.
+
+```
+
+### Startup commands Summary:
+
+```sh
+# setup
+npm install --prefix=functions &
+npm install --prefix=polkadot-apac-hackathon/auth-server &
+yarn install
+
+# Start frontend
+yarn start
+# Start auth server
+npm run start-dev --prefix=polkadot-apac-hackathon/auth-server
+# Start pin server
+npm run test --prefix=functions
+
+```
+
+## Gotchas
+
+### Hcaptcha filters out localhost
+
+See: https://docs.hcaptcha.com/#local-development
+
+> The simplest way to circumvent these issues is to add a hosts entry. For example:
+>
+>`127.0.0.1 test.mydomain.com`
+>Place this in `/etc/hosts` on Linux, `/private/etc/hosts` on Mac OS X, or `C:\Windows\System32\Drivers\etc\hosts` on Windows.
+>
+>You can then access your local server via http://test.mydomain.com, and everything will work as expected.
+
+### Cors error when using test host
+
+Cors is only configured for the `auth-server` and you can change config [here](./polkadot-apac-hackathon/auth-server/app.ts#L26)
+
+### Specifying Connecting Node
+
+There are two ways to specify it:
+
+- With `PROVIDER_SOCKET` in `{common, development, production}.json`.
+- With `rpc=<ws or wss connection>` query paramter after the URL. This overrides the above setting.
+
+## Reusable Components
+
+### useSubstrate Custom Hook
+
+The custom hook `useSubstrate` provides access to the Polkadot js API and thus the
+keyring and the blockchain itself. Specifically it exposes this API.
+
+```js
+{
+  socket,
+  types,
+  keyring,
+  keyringState,
+  api,
+  apiState,
+}
+```
+
+- `socket` - The remote provider socket it is connecting to.
+- `types` - The custom types used in the connected node.
+- `keyring` - A keyring of accounts available to the user.
+- `keyringState` - One of `"READY"` or `"ERROR"` states. `keyring` is valid
+  only when `keyringState === "READY"`.
+- `api` - The remote api to the connected node.
+- `apiState` - One of `"CONNECTING"`, `"READY"`, or `"ERROR"` states. `api` is valid
+  only when `apiState === "READY"`.
+
+### TxButton Component
+
+The [TxButton](./src/substrate-lib/components/TxButton.js) handles basic
+[query](https://polkadot.js.org/api/start/api.query.html) and
+[transaction](https://polkadot.js.org/api/start/api.tx.html) requests to the
+connected node. You can reuse this component for a wide variety of queries and
+transactions. See [src/Transfer.js](./src/Transfer.js) for a transaction example
+and [src/ChainState.js](./src/ChainState.js) for a query example.
+
+### Account Selector
+
+The [Account Selector](./src/AccountSelector.js) provides the user with a unified way to
+select their account from a keyring. If the Balances module is installed in the runtime,
+it also displays the user's token balance. It is included in the template already.
