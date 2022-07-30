@@ -1,7 +1,8 @@
+/* eslint-disable import/no-unresolved */
 import { AddressOrPair } from '@polkadot/api/types';
-import { useState } from 'react';
+import { SubstrateReadyCTX } from 'chocolate/Layouts/app/InnerAppProvider';
+import { useContext, useState } from 'react';
 import config from '../../../config';
-import { useSubstrate } from '../../../substrate-lib';
 
 const isDebug = config.REACT_APP_DEBUG;
 
@@ -12,7 +13,7 @@ type RevSend = (
 /** Send the actual review to chain along with cid */
 const useReviewSend: RevSend = function (txData, account) {
   const { id, cid, rating } = txData;
-  const { api } = useSubstrate();
+  const { api } = useContext(SubstrateReadyCTX);
   const [fee, setFee] = useState('..loading fee..');
   const getPaymentInfo = async function () {
     const paymentInfo = await api.tx.chocolateModule

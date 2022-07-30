@@ -3,12 +3,12 @@ import { useSubstrate } from 'chocolate/substrate-lib';
 import { JSONUser } from 'chocolate/typeSystem/jsonTypes';
 /* eslint-enable import/no-unresolved */
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Button, Card, Container, Image, Label } from 'semantic-ui-react';
 import { useUserReviews } from '../common/hooks/useUserReviews';
 
 interface SidebarProps {
   user: JSONUser;
+  web3Addr: string;
 }
 
 const SideBarStat: React.FC<{
@@ -29,10 +29,10 @@ const SideBarStat: React.FC<{
 );
 
 const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { user } = props;
+  const { user, web3Addr } = props;
   const [userAggr, setUserAggr] = useState({ name: 'Anonymous' });
   // try to grab user from keyring
-  const { web3Address } = useParams<{ web3Address: string }>();
+  const web3Address = web3Addr;
   const search = useUserReviews(web3Address);
 
   const { keyring } = useSubstrate();

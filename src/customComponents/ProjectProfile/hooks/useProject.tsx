@@ -1,46 +1,47 @@
+/* eslint-disable import/no-unresolved */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-unused-vars */
 import { ApiPromise } from '@polkadot/api';
 import { VoidFn } from '@polkadot/api/types';
 import { Option, U32 } from '@polkadot/types';
+import { SubstrateReadyCTX } from 'chocolate/Layouts/app/InnerAppProvider';
 import {
+  HumanChainProject,
   HumanChainReview,
   HumanNewProjectWithIndex,
   HumanNewReview,
-  HumanChainProject,
   NewMetaData,
   ReviewContent,
   ReviewKeyAl,
-  // eslint-disable-next-line import/no-unresolved
 } from 'chocolate/typeSystem/jsonTypes';
-import { useEffect, useMemo } from 'react';
+/* eslint-enable import/no-unresolved */
+import { useContext, useEffect, useMemo } from 'react';
 import { useQueries, useQuery, useQueryClient, UseQueryResult } from 'react-query';
+import config from '../../../config';
 import { ProjectAl, ProjectID, ReviewAl } from '../../../interfaces';
 import { useSubstrate } from '../../../substrate-lib';
 import { allCheck, resArr, shouldComputeValid } from '../../ProjectsRe/hooks';
 import { errorHandled, limitedPinataFetch } from '../../utils';
-import config from '../../../config';
 
 const isDebug = config.REACT_APP_DEBUG;
 
+type MaybeSubscribe =
+  | { pair: [ProjectAl, ProjectID]; shouldFire: true }
+  | { pair: undefined; shouldFire: false };
 /**
  * Then deal with websockets
  * Fallback here would be shouldFire && !fallback
  * It should wait for project to have fetched. Specialisation of useProjectsSubscription
  */
-const useProjectSubscription = function (
-  api: ApiPromise,
-  pair: [ProjectAl, ProjectID],
-  shouldFire: boolean
-) {
+const useProjectSubscription = function (api: ApiPromise, maybePair: MaybeSubscribe) {
   const queryClient = useQueryClient();
   //  Subscribe once, more efficient with connections.
   useEffect(() => {
     let unsub: VoidFn;
     // Key should be available now.
-    if (shouldFire) {
-      const key = pair[1];
+    if (maybePair.shouldFire) {
+      const key = maybePair.pair[1];
 
       api.query.chocolateModule
         .projects<Option<ProjectAl>>(key, (pr) => {
@@ -69,7 +70,7 @@ const useProjectSubscription = function (
 
     // Passing api ensures refresh
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [api, shouldFire]);
+  }, [api, maybePair.shouldFire]);
 };
 
 // Share
@@ -89,7 +90,6 @@ const useSingleProject = function (api: ApiPromise, id: string, shouldFire: bool
     // Returning key allows us to track project later
     return [proj.unwrapOrDefault(), key] as [ProjectAl, ProjectID];
   };
-
   const u = new U32(api.registry, id);
   return useQuery<[ProjectAl, ProjectID], Error>({
     queryKey: ['Project', u.toJSON()],
@@ -105,14 +105,19 @@ const useSingleProject = function (api: ApiPromise, id: string, shouldFire: bool
  * NB: Project query returned could be undef. Handle that case.
  */
 export default function useProject(id: string): UseQueryResult<[ProjectAl, ProjectID], Error> {
-  const { api, apiState } = useSubstrate();
+  const { apiState } = useSubstrate();
+  const { api } = useContext(SubstrateReadyCTX);
   const isFallback = apiState !== 'READY';
   // Call from chain.
   const project = useSingleProject(api, id, !isFallback);
 
   // Wait for success and setup sub.
   // Handle case where project isn't defined
-  useProjectSubscription(api, project.data, project.status === 'success');
+  const maybePair = {
+    pair: project.data,
+    shouldFire: project.status === 'success',
+  } as MaybeSubscribe;
+  useProjectSubscription(api, maybePair);
   // Return og interface. Caller should handle undef.
   return project;
 }
@@ -308,7 +313,8 @@ export const useProfileData = function (project: [ProjectAl, ProjectID]) {
  * Returns [reviews,anyErred, anyInitiallyLoading, allIdle] so UI can react appropriately with nice messages. :wink:
  */
 export const useReelData = function (project: [ProjectAl, ProjectID]) {
-  const { api, apiState } = useSubstrate();
+  const { apiState } = useSubstrate();
+  const { api } = useContext(SubstrateReadyCTX);
   // First use of fallback
   const fallback = apiState !== 'READY';
   // First, get the keys, And Use this as trigger for structs

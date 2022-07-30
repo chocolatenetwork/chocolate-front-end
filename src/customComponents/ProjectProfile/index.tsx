@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Image, Loader, Message, Modal } from 'semantic-ui-react';
+import config from '../../config';
 import { Rating } from '../Projects';
 import { useApp } from '../state';
 import { loader } from '../utilities';
@@ -12,7 +13,6 @@ import { useProject } from './hooks';
 import { noPrjErr, useProfileData, useReelData } from './hooks/useProject';
 import './profile.css';
 import { ProfileSum, PrProf, RevReel, SumRev } from './types';
-import config from '../../config';
 
 const isDebug = config.REACT_APP_DEBUG;
 
@@ -37,10 +37,11 @@ const ProjectProfileSummary: ProfileSum = function (props) {
     return <Message error content='Undefined state ProjectProfileSummary' />;
   }
   // Then do necessary displays
-  const { name, Link: site, description } = profile.project.metadata;
+  const { name, Link: maybeSite, description } = profile.project.metadata;
   const { totalReviewScore, numberOfReviews } = profile.project;
   const src = `https://avatars.dicebear.com/api/initials/${name}.svg`;
   const ave = Number(totalReviewScore) / Number(numberOfReviews);
+  const site = maybeSite ?? '#'; // not polyfilled. Remove when test data is sanitised.
   return (
     <article className='head-profile'>
       <section className='left'>
@@ -75,7 +76,7 @@ const SubmitReview: SumRev = function (props) {
   // initial stage for interactive modal. Run only once
   // pathfor interactive modal
   const params = useParams<{ id: string; '*'?: `/stage/${Stages}` }>();
-  const { id } = params;
+  const id = proj[1].toHuman();
   const init = /stage\/[1234]/.test(params['*'] ?? '');
   const navigate = useNavigate();
   useEffect(() => {
@@ -138,7 +139,7 @@ const ReviewReel: RevReel = function (props) {
 
   /** Begin UI states */
   // Loading intially...
-  let L = null;
+  let L = <></>;
 
   if (anyInitiallyLoading) {
     L = loader('Fetching reviews...');
@@ -148,11 +149,11 @@ const ReviewReel: RevReel = function (props) {
     L = loader('Fetching reviews...');
   }
   // Partial error, chance of fallback activating here
-  let E: JSX.Element;
+  let E = <></>;
   if (reviews.length === 0 && anyErred) {
     // If allErred and none exist, show fail screen. Else, UI will show fallback and we assume that it's fetching
     // Mutex
-    L = null;
+    L = <></>;
     E = message('Error fetching reviews');
   }
   // Complete error
@@ -173,8 +174,8 @@ const ReviewReel: RevReel = function (props) {
       {/* Include banner if in fallback */}
       <h2 className='About review_header card-list'>Reviews</h2>
       <Card.Group className='box_indiv'>{renderContent}</Card.Group>
-      {L ?? ''}
-      {E ?? ''}
+      {L}
+      {E}
     </article>
   );
 };
@@ -218,8 +219,10 @@ const ProjectProfile: PrProf = function (props) {
  * This component handles the initial fetch of the project, loading state UI of the ProjectAl, and sorting them. It's an initial page-wide blanket of <NFound/>
  */
 const Main: React.FC = function () {
-  const { id } = useParams<{ id: string }>();
-  const { data, isLoading: isInitiallyLoading, isError, error, isIdle } = useProject(id);
+  const params = useParams<{ id: string }>();
+  const id = params.id ?? '';
+  // Perfectly fine to pass empty id, will default to  0 when U32 is created, leaving none as long as project 0 doesn't exist
+  const { data, isLoading: isInitiallyLoading, isIdle, ...restOfProjectQuery } = useProject(id);
   if (!data) {
     // Ref: https://react-query.tanstack.com/reference/useQuery
     // Three states of concern: Idle
@@ -230,8 +233,9 @@ const Main: React.FC = function () {
     // Loading for the first time,
     if (isInitiallyLoading) return loader('Fetching project..');
     // or erred
-    if (isError) {
-      if (error.message === noPrjErr) return message('Error, project not found', true);
+    if (restOfProjectQuery.isError) {
+      if (restOfProjectQuery.error.message === noPrjErr)
+        return message('Error, project not found', true);
       return message('something went wrong fetching data from the api'); // Make err More subtle, possibly with NFound.
     }
     return message('Undefined state, Project profile');

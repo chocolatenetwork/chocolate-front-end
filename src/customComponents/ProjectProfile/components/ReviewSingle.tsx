@@ -8,16 +8,16 @@ import { Rating } from '../../Projects';
 const ReviewSingle: React.FC<{ each: HumanNewReview }> = function (props) {
   const { each } = props;
   const { content, userID, proposalStatus } = each;
-  const { keyringState, keyring } = useSubstrate();
+  const substr = useSubstrate();
   const isProposed = () => proposalStatus.status === 'Proposed';
-  const accountPair = userID && keyringState === 'READY' && keyring && keyring.getPair(userID);
+  const accountPair = userID && substr.keyringState === 'READY' && substr.keyring.getPair(userID);
   const name = accountPair ? (accountPair.meta?.name as string | undefined) : 'Anonymous';
 
   // see: https://github.com/polkadot-js/apps/blob/b957353d225da81e4e4b44835e535d9c389a1255/packages/react-hooks/src/useEventTrigger.ts
   const [readMore, setReadMore] = useState(false);
   const { reviewText, rating } = content;
   const limit = reviewText.length >= 182;
-  let rev: unknown;
+  let rev: React.ReactNode;
   if (limit) {
     rev = (
       <>

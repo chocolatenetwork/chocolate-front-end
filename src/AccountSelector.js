@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { Button, Dropdown, Icon, Label } from 'semantic-ui-react';
+// eslint-disable-next-line import/no-unresolved
 import { useApp } from './customComponents/state';
 import { useSubstrate } from './substrate-lib';
 
@@ -9,19 +10,17 @@ function Main() {
   const [accountSelected, setAccountSelected] = useState('');
   const { dispatch } = useApp();
   // Get the list of accounts we possess the private key for
-  /**
-   *  @type {Record<"key" | "value"|"text"|"icon",string>[] | undefined}
-   *
-   */
-  const keyringOptions = keyring?.getPairs().map((account) => ({
-    key: account.address,
-    value: account.address,
-    text: String(account.meta.name).toUpperCase(),
-    icon: 'user',
-  }));
+  /** @type {Record<"key" | "value"|"text"|"icon",string>[] | undefined} */
+  const keyringOptions =
+    keyring?.getPairs().map((account) => ({
+      key: account.address,
+      value: account.address,
+      text: String(account.meta.name).toUpperCase(),
+      icon: 'user',
+    })) ?? [];
 
   const [initialAddress, initialName] =
-    keyringOptions?.length > 0 ? [keyringOptions[0].value, keyringOptions[0].text] : ['', ''];
+    keyringOptions.length > 0 ? [keyringOptions[0].value, keyringOptions[0].text] : ['', ''];
   // Set the initial address
   useEffect(() => {
     setAccountSelected(initialAddress);
@@ -32,7 +31,6 @@ function Main() {
     // Update state with new account address
     setAccountSelected(address);
     // find the userName from existing list
-    /** @type {NonNullable<typeof keyringOptions[number]>} */
     const userName = keyringOptions.find((thisOpt) => thisOpt.value === address);
     dispatch({ type: 'USER_DATA', payload: { accountAddress: address, name: userName?.text } });
   };

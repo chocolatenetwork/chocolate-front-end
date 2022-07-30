@@ -1,10 +1,10 @@
-import React from 'react';
 import './loader.css';
 
 const storageKey = 'ChocAccountType';
 
-/** @type {React.FC<{message:string; img?:string; greet?:boolean;}>} */
-const Loading = function (props) {
+const Loading: React.FC<{ message: string; img?: string; greet?: boolean }> = function (
+  props
+): JSX.Element {
   const { message, img } = props;
 
   return (

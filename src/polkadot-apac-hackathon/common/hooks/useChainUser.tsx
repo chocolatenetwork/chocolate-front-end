@@ -1,7 +1,9 @@
 import { ApiPromise } from '@polkadot/api';
-import { useQuery } from 'react-query';
+// eslint-disable-next-line import/no-unresolved
+import { SubstrateReadyCTX } from 'chocolate/Layouts/app/InnerAppProvider';
+import { useContext } from 'react';
 import type { UseQueryResult } from 'react-query';
-import { useSubstrate } from '../../../substrate-lib';
+import { useQuery } from 'react-query';
 import { JSONUser } from '../../../typeSystem/jsonTypes';
 
 const findUser = async (api: ApiPromise, web3Address: string) => {
@@ -14,7 +16,7 @@ const findUser = async (api: ApiPromise, web3Address: string) => {
   return jsonUser;
 };
 const useChainUser = (web3Address: string): UseQueryResult<JSONUser, Error> => {
-  const { api } = useSubstrate();
+  const { api } = useContext(SubstrateReadyCTX);
   const queryKey = ['user', web3Address];
   return useQuery<JSONUser, Error>(queryKey, () => findUser(api, web3Address));
 };

@@ -14,9 +14,11 @@ const CheckAuthAndGetCid: React.FC<CheckCidProps> = function (props) {
   const { isAuthenticated, comment, rating, dispatchCache } = props;
   // if auth, get cid
   const { isLoading, isError, data } = useCid(isAuthenticated, comment, rating);
-  // id for later
-  const { id } = useParams<{ id: string }>();
-  // next
+
+  const params = useParams<{ id: string }>();
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  const id = params.id as string; //  Only valid ids pass initial api fetch. Will never be undefined
+
   const [next, setNext] = useState<boolean>(false);
   const navigate = useNavigate();
   useEffect(() => {
@@ -26,7 +28,6 @@ const CheckAuthAndGetCid: React.FC<CheckCidProps> = function (props) {
     }
     const { cid } = data;
     dispatchCache({ type: 'stage2', stage2: cid, id });
-    // then go to next
     setNext(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isError, data, id]);

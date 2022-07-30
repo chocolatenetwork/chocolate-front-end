@@ -1,54 +1,13 @@
 // eslint-disable-next-line no-use-before-define
-import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { calcResults, handleSubmit } from '../majorUtils';
+import React, { useEffect, useRef, useState } from 'react';
 import { HumanNewProjectWithIndex } from '../../../typeSystem/jsonTypes';
+import { calcResults, handleSubmit } from '../majorUtils';
+import { DisplayResults } from './DisplayResults';
 
 type TimeoutId = ReturnType<typeof setTimeout>;
-// to-do: Make data types generic.
-/** @description A placeholder for project view. Replace as needed */
-const DataSummaryDisplay: React.FC<{ data: HumanNewProjectWithIndex }> = function (props) {
-  const { data } = props;
-  const { Id, project } = data;
-  const { metadata, proposalStatus } = project;
-  const { name, icon } = metadata;
-  const { status } = proposalStatus;
-  // turn project into a class and allow it to average out rating from reviews.
-
-  return (
-    <li role='group' className={`search-result result search-result--${status.toLowerCase()}`}>
-      <img src={icon} alt='Project Logo' width='16px' height='16px' />
-
-      <Link className='search-result__link' to={`/project/${Id.toString()}`}>
-        {name}
-      </Link>
-      <p style={{ fontWeight: 'bold' }}>status: {status}</p>
-    </li>
-  );
-};
-
-/** @description - A placeholder for projects view. Replace as needed */
-const DisplayResults: React.FC<{
-  data: HumanNewProjectWithIndex[];
-  found: boolean;
-}> = function (props) {
-  const { data, found } = props;
-  // take project name, image, status.
-  let content: JSX.Element | JSX.Element[];
-  if (!found) {
-    content = (
-      <>
-        <p className='result'>Sorry, no results were found</p>
-      </>
-    );
-  } else {
-    // paginate for memory.
-    content = data.map((each) => <DataSummaryDisplay key={JSON.stringify(each)} data={each} />);
-  }
-  return <ul className='ui results transition visible search-results'>{content}</ul>;
-};
-
-const SearchBar: React.FC<{ projects: HumanNewProjectWithIndex[] }> = function (props) {
+function SearchBar(
+  props: React.PropsWithChildren<{ projects: HumanNewProjectWithIndex[] }>
+): JSX.Element {
   // data state is handled externally
   const { projects } = props;
   const [value, setValue] = useState('');
@@ -121,5 +80,5 @@ const SearchBar: React.FC<{ projects: HumanNewProjectWithIndex[] }> = function (
       {isSearching && <DisplayResults data={results} found={found} />}
     </form>
   );
-};
+}
 export { SearchBar };
