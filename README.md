@@ -1,62 +1,119 @@
-# Apac Hack note
+# Substrate Front End Template
 
-The code in this repository picks up from the progress done during the encode hack submission of this project.
-i.e All work stemming from this [commit](https://github.com/chocolatenetwork/apac-ui/commit/492089a45fd9f682d10c3b9168387aa17f5e063c)
+This template allows you to create a front-end application that connects to a
+[Substrate](https://github.com/paritytech/substrate) node back-end with minimal
+configuration. To learn about Substrate itself, visit the
+[Substrate Developer Hub](https://substrate.dev).
 
-During the apac hackathon, the following improvements were made to our platform:
+The template is built with [Create React App](https://github.com/facebook/create-react-app)
+and [Polkadot js API](https://polkadot.js.org/api/). Familiarity with these tools
+will be helpful, but the template strives to be self-explanatory.
 
-1. Inclusion of an auth system - username and password
-2. User profiles and a gallery page of the projects
+## Using The Template
 
-These have been organised into respective polkadot-apac-hackathon folders.
+### Installation
 
-1. [Auth-server](./polkadot-apac-hackathon/README.md)
-2. [Auth-view](./src/polkadot-apac-hackathon/README.md)
-## UI Setup
+The codebase is installed using [git](https://git-scm.com/) and [yarn](https://yarnpkg.com/). This tutorial assumes you have installed yarn globally prior to installing it within the subdirectories. For the most recent version and how to install yarn, please refer to [yarn](https://yarnpkg.com/) documentation and installation guides.
 
-This has been moved to [substrate-template](./substrate-template.md)
+```bash
+# Clone the repository
+git clone https://github.com/chocolatenetwork/chocolate-front-end
+cd chocolate-front-end
+yarn install
+```
 
-# Implementor's guide.
+## Usage
 
-The goals are split into the following sections:
+You can start the template in development mode to connect to a locally running node
 
-1. Route protection for stage 2 and above in review modal - require auth.
-2. Include user profile route based on web3 address as pulled from chain.
-3. Include the gallery page.
-4. Complete signup form that collects name, web3 address and, _optionally_, password
-5. Setup react router for the login to redirect to last page
-6. Complete `useAuthState` hook to check with server and implement further guards for [jwt auth](https://www.youtube.com/watch?v=iD49_NIQ-R4).
-7. Develop multicurrency selector for collateralisation and use in a stage of the submit review modal- requires types from chain.
-8. Add in hcaptcha component for forms _optional_, ref could be made to flips instead.
-9. setup docs detailing the distinct feature added and code separation for moderators
+```bash
+yarn start
+```
 
-Reference [server-guide](./auth-server/README.md#%20Implementor's%20guide.) for more info, or lmk.
+You can also build the app in production mode,
 
-# Notes on implemented parts
+```bash
+yarn build
+```
 
-Only goals 1, 2, 4, 5,6,8 and 9 were achieved for this hackathon.
+and open `build/index.html` in your favorite browser.
 
-## Further resources
+## Configuration
 
-1. [Manual_routing](https://github.com/remix-run/react-router/tree/main/examples/auth)
-2. [server redirects](https://stackoverflow.com/a/43213567/16071410).
+The template's configuration is stored in the `src/config` directory, with
+`common.json` being loaded first, then the environment-specific json file with precedence.
 
-## Further notes
+- `development.json` affects the development environment
+- `test.json` affects the test environment, triggered in `yarn test` command.
+> Note: this environment is currently being used for nightly builds
+- `production.json` affects the production environment, triggered in
+  `yarn build` command.
 
-- Route protection can be obtained by doing auth check before switch statement and not in individual components. The hook itself can be polyfilled on the client while the actual endpoint is being developed on server
-- Each review object coming from the chain has the `ownerId` as the public key of the writer, hence this address serves as a good id for the respective profiles. Since the key is stored on the db, further metadata can be pulled.
-- For user profile, the components with styling are ready [here](https://github.com/tobechi00/jade) **Note:** doen't show review on click yet , all's left is to wire it up with the respective data and fill-in metadata with db on the server
+When writing and deploying your own front end, you should configure:
 
-- Rerouting for login and signup can make use of [react-router]'s `useNavigate` hook to retain memory of last route before login/signup
+- Custom types as JSON in `src/config/types.json`. See
+  [Extending types](https://polkadot.js.org/api/start/types.extend.html).
+- `PROVIDER_SOCKET` in `src/config/production.json` pointing to your own
+  deployed node.
+- `DEVELOPMENT_KEYRING` in `src/config/common.json` be set to `false`.
+  See [Keyring](https://polkadot.js.org/api/start/keyring.html).
 
-- for access to substrate rpc calls, the api promise interface is used with methods mapping each section - `queries`, `extrinsics` and the like.Provided by the [`useSubstrate`] hook from the [`substrateProvider`]. Further notes on api [here](./substrate-template.md#%20useSubstrate%20Custom%20Hook)
+### Custom config for chocolate:
 
-Note: TxButton is a useful interface currently used to handle calls to `api.tx`
+Open the vscode workspace file [here](./chocolateapp.code-workspace). `chocolateapp.code-workspace`, as it groups the main folders in this workspace. Folders of focus are: 
 
-## Security notes.
+   * [`functions`](./functions/) : This is a nodejs server that handles pinning cids to pinata.
+   * [`auth-server`](./polkadot-apac-hackathon/auth-server/): This server handles authentication.
 
-As listed out by the hasura tutorial, owasp provides a concrete way of preventing xss after the prereq of csrf protection that jwts and refresh tokens provide.
+Both servers can be run locally with `npm run start-dev`, and have `.env.sample` files which will need to be filled with the respective environment variables and copied to a `.env` file in the folder.
 
-One such is disallowing any untrusted data injection.
+> The `functions` folder requires pinata env variables to connect to ipfs, while the `auth-server` uses mongo so a db url would be needed to connect to the database
 
-1. An example is react router route params
+### Specifying Connecting Node
+
+There are two ways to specify it:
+
+- With `PROVIDER_SOCKET` in `{common, development, production}.json`.
+- With `rpc=<ws or wss connection>` query paramter after the URL. This overrides the above setting.
+
+## Reusable Components
+
+### useSubstrate Custom Hook
+
+The custom hook `useSubstrate` provides access to the Polkadot js API and thus the
+keyring and the blockchain itself. Specifically it exposes this API.
+
+```js
+{
+  socket,
+  types,
+  keyring,
+  keyringState,
+  api,
+  apiState,
+}
+```
+
+- `socket` - The remote provider socket it is connecting to.
+- `types` - The custom types used in the connected node.
+- `keyring` - A keyring of accounts available to the user.
+- `keyringState` - One of `"READY"` or `"ERROR"` states. `keyring` is valid
+  only when `keyringState === "READY"`.
+- `api` - The remote api to the connected node.
+- `apiState` - One of `"CONNECTING"`, `"READY"`, or `"ERROR"` states. `api` is valid
+  only when `apiState === "READY"`.
+
+### TxButton Component
+
+The [TxButton](./src/substrate-lib/components/TxButton.js) handles basic
+[query](https://polkadot.js.org/api/start/api.query.html) and
+[transaction](https://polkadot.js.org/api/start/api.tx.html) requests to the
+connected node. You can reuse this component for a wide variety of queries and
+transactions. See [src/Transfer.js](./src/Transfer.js) for a transaction example
+and [src/ChainState.js](./src/ChainState.js) for a query example.
+
+### Account Selector
+
+The [Account Selector](./src/AccountSelector.js) provides the user with a unified way to
+select their account from a keyring. If the Balances module is installed in the runtime,
+it also displays the user's token balance. It is included in the template already.

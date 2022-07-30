@@ -230,6 +230,7 @@ const Main: React.FC = function () {
       // Only possible in fallback.
       return loader('Waiting for Chain connection...'); // Make a more subtle loader.
     }
+    // Loading for the first time,
     if (isInitiallyLoading) return loader('Fetching project..');
     // or erred
     if (restOfProjectQuery.isError) {
