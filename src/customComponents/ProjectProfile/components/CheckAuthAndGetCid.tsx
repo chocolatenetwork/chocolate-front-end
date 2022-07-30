@@ -16,6 +16,7 @@ const CheckAuthAndGetCid: React.FC<CheckCidProps> = function (props) {
   const { isLoading, isError, data } = useCid(isAuthenticated, comment, rating);
 
   const params = useParams<{ id: string }>();
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   const id = params.id as string; //  Only valid ids pass initial api fetch. Will never be undefined
 
   const [next, setNext] = useState<boolean>(false);

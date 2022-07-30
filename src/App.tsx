@@ -1,4 +1,5 @@
-/* eslint-disable import/no-unresolved */
+// Styles are temporarily back
+import 'semantic-ui-css/semantic.min.css';
 import { AppLayout } from './Layouts/app/AppLayout';
 import { AppProvider } from './Layouts/app/AppProvider';
 // released the brakes on styles
