@@ -69,6 +69,25 @@ Both servers can be run locally with `npm run start-dev`, and have `.env.sample`
 
 > The `functions` folder requires pinata env variables to connect to ipfs, while the `auth-server` uses mongo so a db url would be needed to connect to the database
 
+### Setting up IPFS dev server
+
+Follow these steps:
+```sh
+#!/usr/bin/bash
+
+# 1. Obtain these folders from IPFS and pin to your node 
+tar -xf QmdKx4pmnJUP5GdjtpJE2ei4xeaRKQWYwvXGuVY1AbAwDM.tar.gz
+ipfs add -r QmdKx4pmnJUP5GdjtpJE2ei4xeaRKQWYwvXGuVY1AbAwDM
+tar -xf QmZYFDXezEuSTyHr42Wro4WqRPQFP6CQFZaZ4CKQcqnUwH.tar.gz 
+ipfs add -r QmZYFDXezEuSTyHr42Wro4WqRPQFP6CQFZaZ4CKQcqnUwH
+rm -r QmdKx4pmnJUP5GdjtpJE2ei4xeaRKQWYwvXGuVY1AbAwDM
+rm -r QmZYFDXezEuSTyHr42Wro4WqRPQFP6CQFZaZ4CKQcqnUwH
+
+# 2. Add all applicable URLs of the web app to the nodes' corslist. (Include the ipfs webui's public url if need be)
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '[ "http://localhost:8000", "https://8000-chocolatene-chocolatefr-7k0gu7e2nvn.ws-eu54.gitpod.io", "http://localhost:3000", "http://127.0.0.1:5001", "https://webui.ipfs.io"]'
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "POST"]'
+
+```
 ### Specifying Connecting Node
 
 There are two ways to specify it:
