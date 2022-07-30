@@ -19,18 +19,19 @@ import WallOfShame from '../WallOfShame';
 import './landing.css';
 
 const queryCache = new QueryCache({
-  onError: (error: Error, query) => {
+  onError: (error, query) => {
     // only show errors for refetches. So intial error should be handled locally.
     if (query.state.data !== undefined) {
-      toast.error(`Something went wrong ${error.message}`);
+      if (error instanceof Error) toast.error(`Something went wrong ${error.message}`);
+      else toast.error(`Something went wrong `);
     }
   },
 });
 const client = new QueryClient({ queryCache });
 
-function Main(): JSX.Element {
+function IndexPageEntry(): JSX.Element {
   const { apiState, apiError } = useSubstrate();
-  const [back, setBack] = useState(false);
+  const [back] = useState(false);
 
   // Remove these when done.
   if (apiState === 'ERROR') return message(apiError);
@@ -40,7 +41,7 @@ function Main(): JSX.Element {
       <QueryClientProvider contextSharing client={client}>
         <AuthProvider>
           <Router>
-            <MenuBar setBack={setBack} />
+            <MenuBar />
             <Routes>
               <Route index element={<ProjectsRe />} />
               <Route path='/gallery' element={<Gallery />} />
@@ -60,4 +61,4 @@ function Main(): JSX.Element {
   );
 }
 
-export default Main;
+export default IndexPageEntry;

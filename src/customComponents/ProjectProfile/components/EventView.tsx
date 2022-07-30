@@ -6,8 +6,9 @@ import { List } from 'semantic-ui-react';
 
 /** this is a faux event view, update this when events are understood better */
 const EventView: React.FC<{ event: EventRecord[] }> = function (props) {
-  const { event } = props;
-  const view = event?.map((record, i) => {
+  let { event } = props;
+  event = event ?? [];
+  const view = event.map((record, i) => {
     const { event: localEvent, phase } = record;
     const types = localEvent.typeDef;
     const text = [
@@ -19,16 +20,14 @@ const EventView: React.FC<{ event: EventRecord[] }> = function (props) {
       </p>
     );
     text.push(
-      <p key={JSON.stringify(localEvent.meta)}>{`\t\t${localEvent.meta.docs
-        .toHuman()
-        .toString()}`}</p>
+      <p key={JSON.stringify(localEvent.meta)}>{`\t\t${String(localEvent.meta.docs.toHuman())}`}</p>
     );
     // Learn better type parsing this just separates object Object from better human readables.
     localEvent.data.forEach((data, index) => {
       const typeName = types[index].type;
-      let enValue = /object Object/.test(data.toHuman().toString())
+      let enValue = /object Object/.test(String(data.toHuman()))
         ? data.toString()
-        : data.toHuman().toString();
+        : String(data.toHuman());
       // Example type parsing. Generalise to fx that extracts typeName and errName
       if (isJsonObject(enValue)) {
         if (typeName === 'DispatchError') {
@@ -62,7 +61,7 @@ function findAnyMetaErr(t: DispatchError) {
           return prev;
         },
         // Err cond.
-        { error: new BN(-1), index: new BN(-1) }
+        { error: new BN(-1), index: new BN(-1) } as { [x: string]: BN; error: BN; index: BN }
       )
   );
   return metaErr;

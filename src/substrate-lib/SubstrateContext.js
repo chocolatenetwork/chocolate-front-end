@@ -1,13 +1,11 @@
-import React, { useReducer, useContext } from 'react';
-import PropTypes from 'prop-types';
-import jsonrpc from '@polkadot/types/interfaces/jsonrpc';
-// doc imports
-import {DefinitionRpcExt,AnyJson} from '@polkadot/types/types'
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { web3Accounts, web3Enable } from '@polkadot/extension-dapp';
+import jsonrpc from '@polkadot/types/interfaces/jsonrpc';
 import keyring from '@polkadot/ui-keyring';
-
+import PropTypes from 'prop-types';
+import React, { useContext, useReducer } from 'react';
 import config from '../config';
+
 
 const parsedQuery = new URLSearchParams(window.location.search);
 const connectedSocket = parsedQuery.get('rpc') || config.PROVIDER_SOCKET;
@@ -16,23 +14,11 @@ console.log(`Connected socket: ${connectedSocket}`);
 ///
 // Initial state for `useReducer`
 /**
- * @typedef {{[x:string]:any;
- *  socket: typeof connectedSocket;
- *  jsonrpc: typeof jsonrpc & typeof config["RPC"];
- * types: typeof config["types"];
- * keyring: null;
- * keyringState:null;
- * api:null;
- * apiError:null;
- * apiState:null;
- * }} INIT
+ * @typedef {import('./SubstrateCTXTypes').INIT} INIT
  * @type {INIT}
  */
 const INIT_STATE = {
   socket: connectedSocket,
-  /** 
-   * @type {typeof jsonrpc & config["RPC"]} 
-   */
   jsonrpc: { ...jsonrpc, ...config.RPC },
   types: config.types,
   keyring: null,
@@ -46,19 +32,10 @@ const INIT_STATE = {
 // Reducer function for `useReducer`
 
 /**
- * @typedef {{
- *    [x: string]:any;
- *    socket: INIT["socket"];
- *    jsonrpc:INIT["jsonrpc"]; types: INIT["types"];
- *    keyring:null | typeof keyring;
- *    keyringState:null | 'LOADING' | "ERROR" | "READY";
- *    api:null | ApiPromise;
- *    apiState:null | "CONNECT_INIT" | "CONNECTING" | "READY" | "ERROR"; 
- *    apiError: AnyJson;
- *  }} SubstrState
- * @typedef {{ type: "CONNECT_INIT" | "CONNECT_SUCCESS" | "LOAD_KEYRING" |"KEYRING_ERROR" ;} | 
- * {type: "CONNECT"; payload: ApiPromise;}| {type:"CONNECT_ERROR"; payload:any;} |
- * {type:"SET_KEYRING";payload:typeof keyring} | {type:"other";payload:any;}} action 
+ * @typedef  { import('./SubstrateCTXTypes').SubstrState} SubstrState 
+ * @typedef {{ type: "CONNECT_INIT" | "LOAD_KEYRING" |"KEYRING_ERROR" ;} | 
+ * {type: "CONNECT"; payload: ApiPromise;}| {type:"CONNECT_ERROR"; payload:import('@polkadot/types/types').AnyJson;} |
+ * {type:"SET_KEYRING";payload:typeof keyring} | {type: "CONNECT_SUCCESS"; payload: ApiPromise}|  {type:"other";}} action 
  * @type {React.Reducer<SubstrState,action>}
  * 
  * @returns {SubstrState}
@@ -66,19 +43,19 @@ const INIT_STATE = {
 const reducer = (state,action) => {
   switch (action.type) {
     case 'CONNECT_INIT':
-      return { ...state, apiState: 'CONNECT_INIT' };
+      return { ...state,api: null, apiState: 'CONNECT_INIT' };
 
     case 'CONNECT':
       return { ...state, api: action.payload, apiState: 'CONNECTING' };
 
     case 'CONNECT_SUCCESS':
-      return { ...state, apiState: 'READY' };
+      return { ...state, api: action.payload, apiState: 'READY' };
 
     case 'CONNECT_ERROR':
-      return { ...state, apiState: 'ERROR', apiError: action.payload };
+      return { ...state,api: null, apiState: 'ERROR', apiError: action.payload };
 
     case 'LOAD_KEYRING':
-      return { ...state, keyringState: 'LOADING' };
+      return { ...state,keyring: null, keyringState: 'LOADING' };
 
     case 'SET_KEYRING':
       return { ...state, keyring: action.payload, keyringState: 'READY' };
@@ -114,9 +91,9 @@ const connect = (state, dispatch) => {
   _api.on('connected', () => {
     dispatch({ type: 'CONNECT', payload: _api });
     // `ready` event is not emitted upon reconnection and is checked explicitly here.
-    _api.isReady.then((_api) => dispatch({ type: 'CONNECT_SUCCESS' }));
+    _api.isReady.then((__api) => dispatch({ type: 'CONNECT_SUCCESS', payload: __api }));
   });
-  _api.on('ready', () => dispatch({ type: 'CONNECT_SUCCESS' }));
+  _api.on('ready', () => dispatch({ type: 'CONNECT_SUCCESS', payload: _api }));
   _api.on('error', err => dispatch({ type: 'CONNECT_ERROR', payload: err }));
 };
 
@@ -168,13 +145,17 @@ const DispatchContext = React.createContext(Object());
 /** 
  *  ** RENDER BEFORE USING SUBSTRATECONTEXT **
  *  @description At a glance this is a top-level provider for only the context, but it also allows for definition of types and a socket that overrides those preset in config, all from app.js
- *  @type {React.FC<{[x:string]: any;socket?:string; types?:{[x:string]:any};}>}*/
+ *  @type {React.FC<{socket?:string; types?:Partial<INIT['types']>;}>}*/
 const SubstrateContextProvider = (props) => {
   // filtering props and merge with default param value
-  const initState = { ...INIT_STATE };
+  let initState = { ...INIT_STATE };
+  /** @type {['socket','types']} */
   const neededPropNames = ['socket', 'types'];
   neededPropNames.forEach(key => {
-    initState[key] = (typeof props[key] === 'undefined' ? initState[key] : props[key]);
+    const prop  = props[key];
+    if(typeof prop !== 'undefined'){
+      initState = Object.assign({},initState,{[key]: prop});
+    }
   });
 
   const [state, dispatch] = useReducer(reducer, initState);

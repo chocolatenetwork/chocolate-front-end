@@ -16,7 +16,8 @@ import {
   useProjectsSubscription,
   useProjectsWithMetadata,
 } from 'chocolate/customComponents/ProjectsRe/hooks';
-import { useMemo } from 'react';
+import { SubstrateReadyCTX } from 'chocolate/Layouts/app/InnerAppProvider';
+import { useContext, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { ProjectID } from '../../../interfaces';
 import { useSubstrate } from '../../../substrate-lib';
@@ -108,7 +109,7 @@ const useRelatedProjects = function (
  */
 const useRelatedReviews = function (
   api: ApiPromise,
-  usersKeys: ReviewKeyAl[],
+  usersKeys: ReviewKeyAl[] | undefined,
   isKeySuccess: boolean,
   fallback: boolean
 ) {
@@ -144,7 +145,8 @@ const useRelatedReviews = function (
  * Returns: [TableSetReview[], anyMetaErr,anyMetaInitiallyLoading,isEitherCompletelyIdle]
  */
 export const useUserReviews = function (web3Address: string) {
-  const { api, apiState } = useSubstrate();
+  const { apiState } = useSubstrate();
+  const { api } = useContext(SubstrateReadyCTX);
   const fallback = apiState !== 'READY';
   // Fetch review keys
   const { data: usersKeys, isSuccess: isKeySuccess } = useRelatedKeys(api, web3Address); // isSuccess mirrors state var. safe to use.
